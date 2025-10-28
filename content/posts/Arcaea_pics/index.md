@@ -13,9 +13,9 @@ tags:
 游戏安装包大体分为两类，安卓的 apk 和 iOS 的 ipa 文件。这里都可以，我们选择 apk 文件。apk 文件实际上是一个 zip 压缩包，我们可以直接改后缀名然后解压缩，但是为了之后可以更改完再重新打包，我们选择 apktool 工具。
 
 > apktool 是什么？[官网](https://apktool.org/)的介绍是 "A tool for reverse engineering Android apk files"，即是一个用于反编译和重新编译 apk 文件的命令行工具。他支持全平台使用，安装方法：
-> 
+>
 > Windows ： 去官网下载软件的压缩包，然后解压之后放在一个你喜欢的地方，把这个文件夹添加到系统路径中。去命令行中测试 `apktool` ，如果出现了工具本身的 help 文档就说明成功了。
-> 
+>
 > 你可能的问题：（请自行查阅，这或许对你以后的命令行使用有很大的帮助）
 > - 什么是系统路径？
 > - 系统路径是做什么的？
@@ -46,7 +46,7 @@ I: Baksmaling classes2.dex...
 I: Copying assets and libs...
 I: Copying unknown files...
 I: Copying original files...
-➜  Downloads 
+➜  Downloads
 ```
 我这里的 `➜  Downloads `是 MacOS 的 `zsh` 此时本文件夹的提示符。此时我们的文件目录应该大概是这样
 
@@ -67,7 +67,7 @@ I: Copying original files...
 └── arcaea_5.10.1c.apk
 
 10 directories, 3 files
-➜  Downloads 
+➜  Downloads
 ```
 那么接下来我们就需要去查找我们想要的小贴纸了。一般来说资源文件都会放在 `assets` 下面，但是即使我们不知道这件事，我们也可以选择查找。这里我们使用 MacOS 和 Linux 中的 `find` 命令来进行查找。这个命令可以在一个文件夹中按照某种方法来查找文件，如果你不是很熟悉，你可以考虑安装 `tldr` 包来看看这个命令怎么用。使用 `brew install tldr` 之后，查看 `find` 命令。
 ```
@@ -102,7 +102,7 @@ More information: <https://manned.org/find>.
 - Find empty files (0 byte) or directories and delete them verbosely:
     find root_path -type f|d -empty -delete -print
 
-➜  Downloads 
+➜  Downloads
 
 ```
 现在我们不如来查找 `maya` 也就是我们的妈呀小姐～ 根据上面的命令文档，我们可以简单的使用命令行来查找她。
@@ -115,10 +115,10 @@ More information: <https://manned.org/find>.
 .//arcaea_5.10.1c/assets/img/story/entry_maya_boss.png
 .//arcaea_5.10.1c/assets/img/story/entry_maya_boss_pressed.png
 .//arcaea_5.10.1c/assets/audio/insight_maya_vanish.wav
-➜  Downloads 
+➜  Downloads
 ```
 根据游戏中贴图的使用是在 Linkplay ，显然 `.//arcaea_5.10.1c/assets/img/multiplayer/stickers/maya.png` 就是我们想要的。
-![alt text](QQ_1725352639398.png) 
+![alt text](QQ_1725352639398.png)
 现在我们就已经获得了所有我们想要的图，甚至我们还拥有了全语言版本。
 
 ---
@@ -147,7 +147,7 @@ More information: <https://ibotpeaches.github.io/Apktool/>.
 - Install and store a framework:
     apktool if path/to/framework.apk
 
-➜  Downloads 
+➜  Downloads
 ```
 重新打包大概会出现下面的信息。
 ```
@@ -164,7 +164,7 @@ I: Copying libs... (/kotlin)
 I: Building apk file...
 I: Copying unknown files/dir...
 I: Built apk into: ARCAEA_CHANGE.apk
-➜  Downloads 
+➜  Downloads
 ```
 那么此时我们就拥有了一个新的 APK 文件，我们需要将其安装到安卓手机上。然而安卓手机在安装 apk 文件之前会检查文件的签名和包名。因此我们还需要将其签名（所幸本游戏没有加密、加壳、反调试和签名校验等等）。签名也有命令行工具，然而我们有更简单的方法。将我们生成的 apk 文件发送到你的设备上，在设备上下载一个 [mt管理器](https://mt2.cn/)，它可能会需要你注册登陆，但是那非常简单。在 mt 中找到你生成的 apk 文件。单击它，左下角功能，然后你就会看到一个签名的选项，点击签名然后使用默认签名方案签名之后就可以安装了。
 
@@ -175,6 +175,5 @@ I: Built apk into: ARCAEA_CHANGE.apk
 
 <center>
 <img src="ae71957facaba503075165f73ccea145.jpeg" width="80%" height="100%" />
-这是我的一个特别喜欢草神的朋友改的，效果还可以。
+这是我的一个特别喜欢草神的朋友改的，效果还不错。
 </center>
-

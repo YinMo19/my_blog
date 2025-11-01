@@ -3,6 +3,7 @@ title: 某立体节奏游戏 API 地址逆向
 date: 2024-11-13 06:50:45
 description: 关于逆向二进制与密码学动态调试解法
 tags: ["cfb", "crypto", "binary reverse"]
+showHero: true
 heroStyle: "background"
 ---
 

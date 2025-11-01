@@ -1,7 +1,7 @@
 ---
 title: Arcaea 小贴图
 date: 2024-09-02 23:28:34
-tags:
+tags: ["reverse"]
 ---
 
 在 Arcaea 5.10 版本中更新了 Linkplay 的功能，其中包括了发送一些漂亮可爱的小贴图。这里提供一种简单的方式来获取她们。

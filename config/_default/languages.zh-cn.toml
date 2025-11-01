@@ -12,6 +12,6 @@ dateFormat = "2 January 2006"
 
 ["params.author"]
 name = "YinMo19"
-# headline = ""
+headline = "Rust, ARM ASM, and Mac."
 image = "avatar.png"
 links = [{ github = "https://github.com/YinMo19" }]

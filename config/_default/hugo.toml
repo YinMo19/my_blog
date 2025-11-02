@@ -11,8 +11,7 @@ summaryLength = 0
 buildDrafts = false
 buildFuture = false
 enableEmoji = true
-
-#  googleAnalytics = "G-XXXXXXXXX"
+googleAnalytics = "G-MEASUREMENT_ID"
 
 [pagination]
 pagerSize = 100
@@ -63,3 +62,13 @@ applyFilter = false
 name = "fragmentrefs"
 type = "fragments"
 weight = 10
+
+[params.valine]
+enable = true
+appId = ""
+appKey = ""
+notify = false  # mail notifier , https://github.com/xCss/Valine/wiki
+verify = false  # Verification code
+avatar = ""
+placeholder = "说点什么吧..."
+visitor = true

@@ -20,6 +20,7 @@ buymeacoffee = {  }
 verification = {  }
 rssnext = {  }
 advertisement = {  }
+showComments = true
 
 [header]
 layout = "basic"
@@ -67,6 +68,7 @@ showCategoryOnly = false
 showAuthorsBadges = false
 showWordCount = true
 showZenMode = false
+showComments = true
 
 [list]
 showHero = false
@@ -105,3 +107,6 @@ showTableOfContents = true
 groupByYear = false
 cardView = false
 cardViewScreenWidth = false
+
+[assets]
+customJS = ["js/dark-mode-sync.js"]

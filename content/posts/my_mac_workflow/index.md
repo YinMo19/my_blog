@@ -2,6 +2,8 @@
 title: 我的Mac工作流
 date: 2024-09-04 08:48:19
 tags: ["mac"]
+showHero: true
+heroStyle: "background"
 ---
 
 说起来其实早些时候加入了 [开源技术协会](osa.moe)，所以对 Linux 也算有了一些了解。后来在暑假拥有了一台 Mac，也算是类 Unix 系统，所以用起来在命令行上熟悉的很快，而且 Mac 的访达（相当于文件资源管理器）也非常方便，所以这里就写一篇简单介绍我的 Mac 的工作流。

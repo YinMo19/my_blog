@@ -577,7 +577,7 @@ ori: [2, 8, 18, 32, 50, 72, 98, 128, 162]
 ```
 非常成功，一切都符合我们的预期。
 
-> 但是这里有个问题，既然我们都已经确定了这个调用是通过返回值放在第一个参数来实现的，为什么我们最开始在 rust 里面调用这个 Cpp 函数，又或者我们 hook 的时候原函数作为返回值，我们依然还是使用 `let ori: fn(CppVector<i32>) -> CppVector<i32> = transmute(ori_ptr);` 来调用呢？ rust 其实 Vec 的实现也是默认一样的将 `fn(CppVector<i32>) -> CppVector<i32>`这个签名的函数自动更改为和 cpp 一样的方式，属实是瞎猫碰到死耗子了。
+> 但是这里有个问题，既然我们都已经确定了这个调用是通过返回值放在第一个参数来实现的，为什么我们最开始在 rust 里面调用这个 Cpp 函数，又或者我们 hook 的时候原函数作为返回值，我们依然还是使用 `let ori: fn(CppVector<i32>) -> CppVector<i32> = transmute(ori_ptr);` 来调用呢？ 事实上在 x86 linux 上对于我们自定义的 CppVector ，rust 在函数调用上的实现也是默认一样的将 `fn(CppVector<i32>) -> CppVector<i32>` 这个签名的函数自动更改为返回值为第一个参数这样和 cpp 一样的方式，属实是瞎猫碰到死耗子了。
 > 
 > 这意味着，如果我们去掉 `extern "C"`，我们只需要如下代码
 > ```rs
@@ -602,9 +602,9 @@ ori: [2, 8, 18, 32, 50, 72, 98, 128, 162]
 > 12
 > 6
 > ```
-> 但是之前介绍的方法依然是重要的。因为你不能保证 swift, obj-c, 或者其他什么编译型语言他们的 vec 实现和 rust 或者 cpp 一样，所以我们依然要掌握分析汇编到写出一致性的 hook 代码的能力。
+> 但是之前介绍的方法依然是重要的。因为你不能保证 swift, obj-c, 或者其他什么编译型语言他们的 vec 函数调用实现和 rust 或者 cpp 一样，所以我们依然要掌握分析汇编到写出一致性的 hook 代码的能力。
 
-而对于 macos，巧妙的是 Vector 实现依然一致，可能这里面有一些更深刻的原因，比如他们都是编译到 ir 然后由 llvm 后端来进行编译，但我确实不了解这些，只能说非常凑巧。 但如果你使用`extern "C" fn(*mut CppVector<i32>, *mut CppVector<i32>) -> *mut CppVector<i32>` 在 aarch64 架构下的 MacOS 必然失败，因为 Mac 上**至少在这个场景下，编译器并不会改变函数签名**，所以你可以
+而对于 macos，巧妙的是 Vector 函数调用实现依然一致，可能这里面有一些更深刻的原因，比如他们都是编译到 ir 然后由 llvm 后端来进行编译，但我确实不了解这些，只能说非常凑巧。 但如果你使用`extern "C" fn(*mut CppVector<i32>, *mut CppVector<i32>) -> *mut CppVector<i32>` 在 aarch64 架构下的 MacOS 必然失败，因为 Mac 上**至少在这个场景下，编译器并不会改变函数签名**，所以你可以
 ```rs
 #[unsafe(no_mangle)]
 // pub fn replace_cpp( // remove extern "C" is ok.

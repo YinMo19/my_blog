@@ -218,7 +218,7 @@ pub unsafe fn patch_code(addr: Address, code: &[u8]) -> Result<(), DobbyMemoryOp
 这个函数来实现 patch。用起来很简单，指定好我们需要 patch 的地址，然后把小端序的二进制准备好就可以直接替换掉对应的位置了。亲测好用。
 
 ## 加载 image 的顺序
-然后最后就是关于 MacOS 上 insert_dylib 的一些使用上的指南。dobby 实际上是将原本的二进制里面的那个函数实现进行了替换，无论原本是做什么，现在就是在这个函数里面调用我们新定义的函数。insert_dylib 做的事情是侵入式的，也就是整个二进制是作为第一个加载进内存的 image，因此我们如果使用的是 `_dyld_get_image_vmaddr_slide(0)` 来进行地址计算。
+然后最后就是关于 MacOS 上 insert_dylib 的一些使用上的指南。dobby 实际上是将原本的二进制里面的那个函数实现进行了替换，无论原本是做什么，现在就是在这个函数里面调用我们新定义的函数。insert_dylib 做的事情是侵入式的，也就是整个二进制是作为第一个加载进内存的 image，因此我们使用 `_dyld_get_image_vmaddr_slide(0)` 来进行地址计算。
 
 但是如果我们使用的是非侵入式方法，例如 `DYLD_INSERT_LIBRARIES=xxx.dylib ./a_binary` 这样的，那么实际上主二进制是作为第二个加载进去的 image。所以我们需要使用 `_dyld_get_image_vmaddr_slide(1)`。当然如果使用的是 symbol resolve 方法就不需要考虑这些了。这里我们可以通过下面的代码来确认这个行为。
 ```rs

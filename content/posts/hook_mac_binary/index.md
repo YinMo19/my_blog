@@ -344,7 +344,7 @@ extern "C" fn ctor() {
     }
 }
 ```
-事实上就是如此，我们只需要找到便宜量，然后使用 `instrument` 函数注入一个 callback 函数，这个 callback 函数接受两个参数，分别是 hook 的地址和目前的状态上下文。其中状态上下文包含了所有寄存器状态，例如我们这里可以打印查看寄存器状态，并直接修改这个状态。
+事实上就是如此，我们只需要找到偏移量，然后使用 `instrument` 函数注入一个 callback 函数，这个 callback 函数接受两个参数，分别是 hook 的地址和目前的状态上下文。其中状态上下文包含了所有寄存器状态，例如我们这里可以打印查看寄存器状态，并直接修改这个状态。
 ```sh
 > DYLD_INSERT_LIBRARIES=target/release/libdobby_test.dylib ./license
 Enter License Key: aoscinasoicnsaoci

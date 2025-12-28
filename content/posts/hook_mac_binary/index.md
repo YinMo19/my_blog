@@ -217,6 +217,10 @@ pub unsafe fn patch_code(addr: Address, code: &[u8]) -> Result<(), DobbyMemoryOp
 ```
 这个函数来实现 patch。用起来很简单，指定好我们需要 patch 的地址，然后把小端序的二进制准备好就可以直接替换掉对应的位置了。亲测好用。
 
+> 但是如果我只是需要 patch code 的话，随便找个 hex editor 直接改不就完事了吗... 顶多重签名一下就能跑了？
+> 
+> 或许有什么深意没有 get 到。
+
 ## 加载 image 的顺序
 然后最后就是关于 MacOS 上 insert_dylib 的一些使用上的指南。dobby 实际上是将原本的二进制里面的那个函数实现进行了替换，无论原本是做什么，现在就是在这个函数里面调用我们新定义的函数。insert_dylib 做的事情是侵入式的，也就是整个二进制是作为第一个加载进内存的 image，因此我们使用 `_dyld_get_image_vmaddr_slide(0)` 来进行地址计算。
 
@@ -250,6 +254,118 @@ correct answer: 0x102748460
 ```
 可以看到非侵入式的时候 `weird_add` 与使用第二个 image 是一样的，而侵入式方法则与第一个一样。
 
+## Instrument hack
+除此之外，在原本的 dobby-rs binding 没有 pub 出来的还有一个 instrument 函数，这个函数可以完成更加有意思的任务。考虑这样一个场景，我们需要在一个不是函数调用的任意地址，我们想要 hook 这个地方，查看当前所有寄存器以及临时变量等等，我们应该怎么做？
+
+dobby 框架提供了一个 instrument 的函数，它可以在那条指令插入一个函数调用，直接调用我们新定义的一个 callback 函数，并在调用这个函数前保存好所有的临时变量和寄存器。在这函数执行完返回的时候会恢复所有寄存器状态，并在返回前执行被我们替换为调用 callback 的那个地址的指令。
+
+```asm 
+0x1000004e0 mov x8, x9 ; original 
+
+; dobby change it to 
+0x1000004e0 b <the callback function's offset>
+
+
+; <the callback function's offset>:
+; save all the reg's state 
+; do what we do in our definition of callback
+; restore the regs
+mov x8, x9
+ret
+```
+这里我们用一个案例来看看这个 hook 的用法。我们模拟一堆很复杂的位运算来当成校验 license
+```c
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+int check_license(int input_key) {
+  uint32_t transformed_key = input_key;
+
+  transformed_key ^= 0x55AA55AA;
+  transformed_key = (transformed_key << 7) | (transformed_key >> 25);
+  // a lot of calulation! wrapped
+
+  if (transformed_key == 0xDEADC0DE) {
+    return 1;
+  }
+  return 0;
+}
+
+int main() {
+  int key;
+  printf("Enter License Key: ");
+  scanf("%d", &key);
+
+  if (check_license(key)) {
+    printf("Access Granted!\n");
+  } else {
+    printf("Access Denied!\n");
+  }
+  return 0;
+}
+```
+编译，然后我们可以看到
+```asm 
+0000000100000460 <_check_license>:
+100000460: 528ab548    	mov	w8, #0x55aa             ; =21930
+100000464: 72aab548    	movk	w8, #0x55aa, lsl #16
+100000468: 4a080008    	eor	w8, w0, w8
+10000046c: 13886508    	ror	w8, w8, #0x19
+
+; alot of calulation! wrapped.
+; w0 = 1 if w8 == w9 else 0
+1000004e4: 6b09011f    	cmp	w8, w9
+1000004e8: 1a9f17e0    	cset	w0, eq 
+1000004ec: d65f03c0    	ret
+```
+这里我们可以看到，最后我们对 w8, w9进行比较，所以我们可能就会想要在 0x1000004e4 这里看看 w8 和 w9 的值，顺便把他俩改成一样的。
+```rs
+extern "C" fn callback(addr: Address, ctx: *mut DobbyRegisterContext) {
+    println!("Address now is {addr:?}");
+    println!(
+        "original w8 is {:x} and w9 is {:x}",
+        unsafe { (*ctx).general.regs.x8 },
+        unsafe { (*ctx).general.regs.x9 }
+    );
+    unsafe { (*ctx).general.regs.x8 = (*ctx).general.regs.x9 }
+    println!(
+        "Now w8 is {:x} and w9 is {:x}",
+        unsafe { (*ctx).general.regs.x8 },
+        unsafe { (*ctx).general.regs.x9 }
+    );
+}
+
+extern "C" fn ctor() {
+    let license_original = unsafe { _dyld_get_image_vmaddr_slide(1) + 0x1000004e4 };
+
+    unsafe {
+        instrument(license_original as Address, callback).unwrap();
+    }
+}
+```
+事实上就是如此，我们只需要找到便宜量，然后使用 `instrument` 函数注入一个 callback 函数，这个 callback 函数接受两个参数，分别是 hook 的地址和目前的状态上下文。其中状态上下文包含了所有寄存器状态，例如我们这里可以打印查看寄存器状态，并直接修改这个状态。
+```sh
+> DYLD_INSERT_LIBRARIES=target/release/libdobby_test.dylib ./license
+Enter License Key: aoscinasoicnsaoci
+Address now is 0x1004984e4
+original w8 is a7a79c65 and w9 is deadc0de
+Now w8 is deadc0de and w9 is deadc0de
+Access Granted!
+```
+有了这个功能我们就可以直接给二进制打日志了。我们直接找到想要看看运行时日志的地方，就可以直接打印出来想看的东西。这个功能感觉非常强大，但是也有一些限制。例如此时我们无法使用 `insert_dylib` 直接侵入式持久化 hook，经常遇到 `[1]    48351 illegal hardware instruction  ./license_patched`。并不太清楚是怎么回事，我查看更改之后的二进制发现确实是 patch 出了一些奇怪的指令，所以可能是工具的问题？
+
+另外上下文保存的信息是寄存器，例如 `DobbyRegisterContext.general`下面的类型是
+```rs
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union DobbyRegisterContext__bindgen_ty_1 {
+    pub x: [u64; 29usize],
+    pub regs: DobbyRegisterContext__bindgen_ty_1__bindgen_ty_1,
+}
+```
+一个 union，也就是说 `regs.x0` 其实等价于 `x[0]`，所以如果需要大批量打印可以考虑直接使用 `x`。另外还可以查看浮点数寄存器，fp，sp 之类的。但是浮点寄存器似乎有一些限制，dobby 源码的头文件原话是
+> for Arm64, can't access q8 - q31, unless you enable full floating-point register pack.
 
 ---
 # Appendix
